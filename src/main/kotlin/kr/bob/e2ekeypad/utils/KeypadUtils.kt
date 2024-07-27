@@ -20,7 +20,12 @@ object KeypadUtils {
 
         val keypadMap = HashMap<String, String>()
         keys.forEach { key ->
+            if(key!=" " && key!="  "){
+
             keypadMap[key] = UUID.randomUUID().toString() // Assign each key a unique UUID
+            }else{
+                keypadMap[key] = key
+            }
         }
 
         // Shuffle the entries
