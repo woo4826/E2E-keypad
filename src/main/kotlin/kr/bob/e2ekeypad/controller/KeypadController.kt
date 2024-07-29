@@ -85,7 +85,7 @@ class KeypadController {
         keypadMap.forEach { (key, _) ->
             val base64Image = try {
                 // Load the image from the resources folder
-                val resource: Resource = if(key == " " || key =="  ")   ClassPathResource("/static/images/NULL.png") else ClassPathResource("/static/images/$key.png")
+                val resource: Resource = if(key == " " || key =="  ")   ClassPathResource("/static/images/NULL.png") else ClassPathResource("/static/images/_$key.png")
                 val image = ImageIO.read(resource.inputStream)
 
                 // Convert the image to byte array
