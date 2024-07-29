@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keypad Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .keypad-key img {
+            transition: opacity 0.2s;
+        }
+        .keypad-key:hover img {
+            opacity: 0.8;
+        }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .input-group input {
+            text-align: center;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex flex-col items-center justify-center min-h-screen">
+        <div class="flex flex-col items-center space-y-4">
+            <div class="input-group">
+                <input class="keypad-input p-2 border rounded" type="password" maxlength="1" id="input-1" readonly>
+                <input class="keypad-input p-2 border rounded" type="password" maxlength="1" id="input-2" readonly disabled>
+                <input class="keypad-input p-2 border rounded" type="password" maxlength="1" id="input-3" readonly disabled>
+                <input class="keypad-input p-2 border rounded" type="password" maxlength="1" id="input-4" readonly disabled>
+            </div>
+            <div class="flex space-x-4">
+                <button class="keyboard-delete px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Delete</button>
+                <button class="keyboard-submit px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" disabled>Submit</button>
+                <button class="keyboard-delete-all px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Delete All</button>
+            </div>
+        </div>
+        <div class="keypad-container grid grid-cols-3 gap-4 mt-12" id="keypad-container"></div>
+        <p class="error-message text-red-500 mt-4 hidden">Input must be exactly 4 characters long.</p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const keypadContainer = document.getElementById("keypad-container");
+            const keypadInputs = document.querySelectorAll(".keypad-input");
+            const keyboardDelete = document.querySelector(".keyboard-delete");
+            const keyboardDeleteAll = document.querySelector(".keyboard-delete-all");
+            const keyboardSubmit = document.querySelector(".keyboard-submit");
+            const errorMessage = document.querySelector(".error-message");
+
+            let currentInputIndex = 0;
+
+            const updateSubmitButtonState = () => {
+                const allFilled = Array.from(keypadInputs).every(input => input.value === "_");
+                keyboardSubmit.disabled = !allFilled;
+            };
+
+            keypadInputs.forEach((input, index) => {
+                input.addEventListener("input", (e) => {
+                    if (e.inputType !== 'deleteContentBackward') {
+                        if (index < keypadInputs.length - 1) {
+                            keypadInputs[index + 1].disabled = false;
+                            keypadInputs[index + 1].focus();
+                        }
+                    } else {
+                        if (index > 0) {
+                            keypadInputs[index - 1].focus();
+                        }
+                    }
+                    updateSubmitButtonState();
+                });
+            });
+
+            keyboardDelete.addEventListener("click", () => {
+                if (currentInputIndex >= 0) {
+                    if (keypadInputs[currentInputIndex].value !== '') {
+                        keypadInputs[currentInputIndex].value = '';
+                    } else if (currentInputIndex > 0) {
+                        keypadInputs[currentInputIndex].disabled = true;
+                        currentInputIndex--;
+                        keypadInputs[currentInputIndex].value = '';
+                        keypadInputs[currentInputIndex].focus();
+                    }
+                }
+                updateSubmitButtonState();
+            });
+
+            keyboardDeleteAll.addEventListener("click", () => {
+                keypadInputs.forEach((input, index) => {
+                    input.value = '';
+                    input.disabled = index !== 0;
+                });
+                currentInputIndex = 0;
+                keypadInputs[0].focus();
+                updateSubmitButtonState();
+            });
+
+            keyboardSubmit.addEventListener("click", () => {
+                const inputValues = Array.from(keypadInputs).map(input => input.value).join('');
+                if (inputValues.length !== 4 || inputValues.includes('')) {
+                    errorMessage.classList.remove("hidden");
+                } else {
+                    errorMessage.classList.add("hidden");
+                    // Submit form or handle valid input
+                    console.log("Submitted:", inputValues);
+                }
+            });
+
+            fetch('/api/keypad/request')
+                .then(response => response.json())
+                .then(data => {
+                    const keypadMap = data.keypad;
+                    const keypadContainer = document.getElementById('keypad-container');
+
+                    if (!keypadContainer) {
+                        console.error('Keypad container not found');
+                        return;
+                    }
+
+                    Object.entries(keypadMap).forEach(([key, base64Image]) => {
+                        const keyElement = document.createElement('div');
+                        keyElement.className = `keypad-key flex items-center justify-center rounded-full border cursor-pointer bg-gray-100 hover:bg-gray-200 ${key}`;
+                        keyElement.style.transition = "background-color 0.2s, border-color 0.2s";
+
+                        const imgElement = document.createElement('img');
+                        imgElement.src = `data:image/png;base64,${base64Image}`;
+                        imgElement.alt = key;
+                        imgElement.className = 'w-16 h-16';
+                        keyElement.appendChild(imgElement);
+                        keypadContainer.appendChild(keyElement);
+
+                        keyElement.addEventListener('click', () => {
+                            if (key.trim() != '' && currentInputIndex < 4) {
+                                keypadInputs[currentInputIndex].value = "_";
+                                if (currentInputIndex < 3) {
+                                    keypadInputs[currentInputIndex + 1].disabled = false;
+                                    keypadInputs[currentInputIndex + 1].focus();
+                                    currentInputIndex++;
+                                }
+                                updateSubmitButtonState();
+                            }
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching keypad data:', error));
+        });
+    </script>
+</body>
+</html>

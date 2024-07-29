@@ -19,7 +19,6 @@ import javax.imageio.ImageIO
 
 @RestController
 @RequestMapping("/api/keypad")
-@CrossOrigin(origins = ["*"])
 class KeypadController {
 
     private val keypads = HashMap<String, KeypadInfo>()
