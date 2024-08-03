@@ -18,7 +18,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     testImplementation(kotlin("test"))
+    runtimeOnly("com.h2database:h2")
 }
 
 tasks.test {

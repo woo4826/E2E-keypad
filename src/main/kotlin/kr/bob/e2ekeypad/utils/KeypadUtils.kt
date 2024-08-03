@@ -2,6 +2,7 @@ package kr.bob.e2ekeypad.utils
 
 import java.security.*
 import java.util.*
+import java.util.Collections.shuffle
 import javax.crypto.Cipher
 import kotlin.collections.HashMap
 
@@ -16,7 +17,7 @@ object KeypadUtils {
 
     fun shuffleKeypad(): Map<String, String> {
         val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", " ", "  ")
-        Collections.shuffle(keys) // Shuffle keys to randomize order
+        shuffle(keys) // Shuffle keys to randomize order
 
         val keypadMap = HashMap<String, String>()
         keys.forEach { key ->
