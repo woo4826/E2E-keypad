@@ -1,5 +1,6 @@
 package kr.bob.e2ekeypad.config
 
+import kr.bob.e2ekeypad.datas.KeyPad
 import kr.bob.e2ekeypad.datas.KeypadInfo
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,11 +13,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 class RedisConfig {
 
     @Bean
-    fun redisTemplate(factory: RedisConnectionFactory): RedisTemplate<String, KeypadInfo> {
+    fun redisTemplate(factory: RedisConnectionFactory): RedisTemplate<String, KeyPad> {
         val template = RedisTemplate<String, Any>()
         template.connectionFactory = factory
         template.keySerializer = StringRedisSerializer()
         template.valueSerializer = GenericJackson2JsonRedisSerializer()
-        return template as RedisTemplate<String, KeypadInfo>
+        return template as RedisTemplate<String, KeyPad>
     }
 }

@@ -10,13 +10,17 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/keypad")
 class KeypadController(private val keypadService: KeypadService) {
 
-    @GetMapping("/request")
-    fun requestKeypad(): KeypadResponse {
+    @GetMapping()
+    fun requestKeypad(): Map<String,Any> {
         return keypadService.requestKeypad()
     }
 
-    @PostMapping("/input")
-    fun inputKey(@RequestBody inputRequest: InputRequest): InputResponse {
-        return keypadService.inputKey(inputRequest)
+    @GetMapping("/{keypadId}")
+    fun requestKeypad(@PathVariable keypadId: String): KeypadResponse {
+        return keypadService.restoreKeypad(keypadId)
     }
+//    @PostMapping("/input")
+//    fun inputKey(@RequestBody inputRequest: InputRequest): InputResponse {
+//        return keypadService.inputKey(inputRequest)
+//    }
 }

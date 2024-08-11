@@ -14,31 +14,19 @@ object KeypadUtils {
         return keyGen.generateKeyPair()
     }
 
-
     fun shuffleKeypad(): Map<String, String> {
-        val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", " ", "  ")
-        shuffle(keys) // Shuffle keys to randomize order
+        val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", " ", " ")
 
-        val keypadMap = HashMap<String, String>()
-        keys.forEach { key ->
-            if(key!=" " && key!="  "){
+        // Shuffle keys to randomize order
+        val shuffledKeys = keys.shuffled()
 
-            keypadMap[key] = UUID.randomUUID().toString() // Assign each key a unique UUID
-            }else{
-                keypadMap[key] = key
-            }
+        // Assign each key a UUID or keep it as is for spaces
+        val keypadMap = shuffledKeys.associateWith { key ->
+            if(key == " ") ""
+            else UUID.randomUUID().toString()
         }
 
-        // Shuffle the entries
-        val shuffledEntries = keypadMap.entries.shuffled() // Shuffle the entries
-
-        // Create a new LinkedHashMap to maintain the shuffled order
-        val shuffledMap = LinkedHashMap<String, String>()
-        shuffledEntries.forEach { entry ->
-            shuffledMap[entry.key] = entry.value
-        }
-
-        return shuffledMap
+        return keypadMap
     }
     fun encrypt(data: String, publicKey: PublicKey): String {
         val cipher = Cipher.getInstance("RSA")

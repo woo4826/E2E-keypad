@@ -2,7 +2,9 @@ package kr.bob.e2ekeypad.datas
 
 data class PublicKeyRequest(val publicKey: String,)
 
-data class KeypadResponse(val keypadId: String, val validUntil: String,val keypad: Map<String,String>,)
+//data class KeypadResponse(val keypadId: String, val validUntil: String,val keypad: KeyPad?,)
+data class KeypadResponse( val keypad: KeyPad?,)
+
 
 data class InputRequest(val keypadId: String, val encryptedInput: String,)
 
