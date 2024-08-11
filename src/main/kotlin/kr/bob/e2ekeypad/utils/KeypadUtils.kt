@@ -82,4 +82,9 @@ object KeypadUtils {
             "Error loading or combining images"
         }
     }
+    fun decrypt(data: String, privateKey:  java.security.Key): String {
+        val cipher = Cipher.getInstance("RSA")
+        cipher.init(Cipher.DECRYPT_MODE, privateKey)
+        return String(cipher.doFinal(Base64.getDecoder().decode(data)))
+    }
 }

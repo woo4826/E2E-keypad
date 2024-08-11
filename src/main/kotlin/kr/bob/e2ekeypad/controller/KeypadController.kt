@@ -15,9 +15,14 @@ class KeypadController(private val keypadService: KeypadService) {
         return keypadService.requestKeypad()
     }
 
-    @GetMapping("/{keypadId}")
-    fun requestKeypad(@PathVariable keypadId: String): KeypadResponse {
-        return keypadService.restoreKeypad(keypadId)
+//    @GetMapping("/{keypadId}")
+//    fun requestKeypad(@PathVariable keypadId: String): KeypadResponse {
+//        return keypadService.restoreKeypad(keypadId)
+//    }
+
+    @PostMapping("/submit")
+    fun submitKeypad(@RequestBody body: InputRequest): InputResponse {
+        return keypadService.submit(body)
     }
 //    @PostMapping("/input")
 //    fun inputKey(@RequestBody inputRequest: InputRequest): InputResponse {
