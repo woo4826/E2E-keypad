@@ -5,6 +5,7 @@ import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.security.*
+import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import java.util.logging.Logger
 import javax.crypto.Cipher
@@ -38,7 +39,9 @@ object KeypadUtils {
         val hash = digest.digest(key.toByteArray())
         return Base64.getEncoder().encodeToString(hash)
     }
+
     fun encrypt(data: String, publicKey: PublicKey): String {
+        if(data =="" )return "";
         val cipher = Cipher.getInstance("RSA")
         cipher.init(Cipher.ENCRYPT_MODE, publicKey)
         return Base64.getEncoder().encodeToString(cipher.doFinal(data.toByteArray()))
