@@ -27,13 +27,19 @@ export default function Home() {
   }, []);
 
   const handleKeyClick = (key: string) => {
-    if (key && inputList.length < 4 && key != "") {
+    if (key && inputList.length < 6 && key != "") {
       setInputList([...inputList, key]);
+      //delay 0.2 seconds
+      if (inputList.length === 5) {
+        setTimeout(() => {
+          handleSubmit();
+        }, 200);
+      }
     }
   };
 
   const handleSubmit = () => {
-    alert(`User input hash values: ${inputList.join(", ")}`);
+    alert(`User input:\n ${inputList.join("\n\n")}`);
     setInputList([]);
   };
 
@@ -41,7 +47,7 @@ export default function Home() {
     setInputList([]);
   };
 
-  const isDisabled = inputList.length === 4;
+  const isDisabled = inputList.length === 6;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
@@ -51,9 +57,9 @@ export default function Home() {
         </div>
       ) : (
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Enter Your 4-Digit Code</h1>
+          <h1 className="text-3xl font-bold mb-4">Enter Your 6-Digit Code</h1>
           <div className="flex justify-center mb-6">
-            {Array(4)
+            {Array(6)
               .fill(null)
               .map((_, index) => (
                 <span
