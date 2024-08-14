@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 export default function Home() {
   const [inputList, setInputList] = useState<string[]>([]);
   const [keys, setKeys] = useState<string[]>([]);
@@ -29,18 +28,19 @@ export default function Home() {
   const handleKeyClick = (key: string) => {
     if (key && inputList.length < 6 && key != "") {
       setInputList([...inputList, key]);
-      //delay 0.2 seconds
-      if (inputList.length === 5) {
-        setTimeout(() => {
-          handleSubmit();
-        }, 200);
-      }
+    }
+    if (inputList.length === 5) {
+      setTimeout(() => {
+        handleSubmit();
+      }, 200);
     }
   };
 
   const handleSubmit = () => {
     alert(`User input:\n ${inputList.join("\n\n")}`);
     setInputList([]);
+    //page refresh
+    window.location.reload();
   };
 
   const handleClear = () => {
