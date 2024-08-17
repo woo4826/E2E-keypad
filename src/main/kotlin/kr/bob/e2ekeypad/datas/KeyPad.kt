@@ -12,7 +12,7 @@ data class KeyPad @JsonCreator constructor(
     @JsonProperty("validUntil") val validUntil: String? = null,
     @JsonProperty("publicKey") val publicKey: String? = null,
     @JsonProperty("privateKey") val privateKey: String? = null,
-    @JsonProperty("hashedKeyList") val hashedKeyList: List<String>? = null,
+    @JsonProperty("keyHashMap") val keyHashMap: Map<String,String>? = null,
     @JsonProperty("sessionKeyHash") val sessionKeyHash: String? = null
 )
 

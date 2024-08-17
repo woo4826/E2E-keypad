@@ -1,9 +1,12 @@
 "use client";
 
+import JSEncrypt from "jsencrypt";
 import { useEffect, useState } from "react";
 export default function Home() {
   const [inputList, setInputList] = useState<string[]>([]);
   const [keys, setKeys] = useState<string[]>([]);
+  const [keyPadId, setKeyPadId] = useState<string[]>([]);
+
   const [backgroundImg, setBackgroundImg] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -14,6 +17,7 @@ export default function Home() {
         const initialData = await res.json();
 
         setKeys(initialData.keys);
+        setKeyPadId(initialData.keypadId);
         setBackgroundImg(`data:image/png;base64,${initialData.backgroundImg}`);
         setLoading(false);
       } catch (error) {
@@ -25,24 +29,65 @@ export default function Home() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (inputList.length === 6) {
+      handleSubmit();
+    }
+  }, [inputList]);
+
   const handleKeyClick = (key: string) => {
-    if (key && inputList.length < 6 && key != "") {
+    if (key && inputList.length <= 6 && key != "") {
       setInputList([...inputList, key]);
-    }
-    if (inputList.length === 5) {
-      setTimeout(() => {
-        handleSubmit();
-      }, 200);
+      if (inputList.length === 6) {
+        // handleSubmit();
+      }
     }
   };
 
-  const handleSubmit = () => {
-    alert(`User input:\n ${inputList.join("\n\n")}`);
-    setInputList([]);
-    //page refresh
-    window.location.reload();
-  };
+  const handleSubmit = async () => {
+    var keyLength = inputList.length;
+    var joinedKeys = inputList.join("");
+    console.log(joinedKeys);
+    //decrypt using ./private_key.pem
+    var encrypt = new JSEncrypt(); // Create a new instance of the JSEncrypt library.
+    var publicKey = `
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtkLA7dcyLqz4M6BS/XZi
+wMee85fjwskmxfZVN/qI854Sa4mlU/5Rse0HcNY0QoF+J3kQF3xWpTKLfw2p5pzt
+sALLN6gsO2m4qLIOk3eNR+hVL2Rh4dc8MAhuXfoTGrfMjXouiy05rYgVpqIRRCjz
+MVGYnJ7arZ6rMN73nRxd0I9RVbe3LXEuHrBysxjfXae6z+qb+1Rp9MKnwiDuKC/i
+2lqqqmV9p/8OuY+qUzsMCtU8URS8kvw/bkg90TEOHzjKWrRIYRcQQkdJ8KuX3/lV
+1jBBgIQRfmQVTFUnkV5XBZw9jXYTsz6Bcp4MNWUlwHQIebAM8vMZ6/nH9p4OdETA
+5wIDAQAB
+-----END PUBLIC KEY-----
+`;
+    encrypt.setPublicKey(publicKey);
+    var encrypted = encrypt.encrypt(joinedKeys);
+    console.log(encrypted);
 
+    fetch("/api/keypad/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        keypadId: keyPadId,
+        data: encrypted,
+        keyLength: keyLength,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+        setInputList([]);
+        window.location.reload();
+        alert(JSON.stringify(result));
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("An error occurred");
+      });
+  };
   const handleClear = () => {
     setInputList([]);
   };

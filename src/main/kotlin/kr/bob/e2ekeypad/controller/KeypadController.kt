@@ -3,6 +3,7 @@ package kr.bob.e2ekeypad.controller
 import kr.bob.e2ekeypad.datas.InputRequest
 import kr.bob.e2ekeypad.datas.InputResponse
 import kr.bob.e2ekeypad.datas.KeypadResponse
+import kr.bob.e2ekeypad.datas.SubmitRequest
 import kr.bob.e2ekeypad.service.KeypadService
 import org.springframework.web.bind.annotation.*
 
@@ -21,7 +22,7 @@ class KeypadController(private val keypadService: KeypadService) {
 //    }
 
     @PostMapping("/submit")
-    fun submitKeypad(@RequestBody body: InputRequest): InputResponse {
+    fun submitKeypad(@RequestBody body: SubmitRequest): InputResponse {
         return keypadService.submit(body)
     }
 //    @PostMapping("/input")

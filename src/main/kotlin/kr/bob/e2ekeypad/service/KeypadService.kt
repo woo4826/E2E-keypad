@@ -6,6 +6,7 @@ import kr.bob.e2ekeypad.datas.*
 import kr.bob.e2ekeypad.repository.KeypadRepository
 import kr.bob.e2ekeypad.utils.KeypadUtils
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -19,6 +20,7 @@ import javax.crypto.spec.SecretKeySpec
 @Service
 class KeypadService(
     private val keypadRepository: KeypadRepository,
+    private val webClient: WebClient
 ) {
 
     // 서비스 인스턴스가 생성될 때 로컬에 키페어를 생성하여 저장
@@ -35,16 +37,15 @@ class KeypadService(
             keypadId = keypadId,
             validUntil = validUntil,
             sessionKeyHash = generateHash(keypadId, validUntil, publicKey.toString()),
-            hashedKeyList = keypadMap.map { (key, value) ->
-                //encrypt using public key
-
-               KeypadUtils.encrypt(value,publicKey)
-            }
+            keyHashMap = keypadMap
         )
+        val hashedKeyList = keypadMap.map { (key, value) ->
+            value
+        }
         keypadRepository.save(keypadId, keyPad)
 
         return mapOf(
-            "keys" to keyPad.hashedKeyList!!,
+            "keys" to hashedKeyList,
             "keypadId" to keypadId,
             "backgroundImg" to KeypadUtils.generateBase64Image(keypadMap.keys.toList())
         )
@@ -70,29 +71,56 @@ class KeypadService(
 
         return keyFactory.generatePublic(keySpec)
     }
-    fun submit(inputRequest: InputRequest): InputResponse {
+    fun submit(inputRequest: SubmitRequest): InputResponse {
         val iKeypadId = inputRequest.keypadId
         val keyPad: KeyPad = keypadRepository.findById(iKeypadId) ?: return InputResponse(false, "Invalid keypadId")
         val validUntil = keyPad.validUntil
-        val iEncryptedInput = inputRequest.encryptedInput
-        val iHmac :String = inputRequest.hmac
+        val keyLength = inputRequest.keyLength
+        val userInput = inputRequest.data
+        val keyHashMap = keyPad.keyHashMap
 
-        if (validUntil == null) {
-            return InputResponse(false, "Cannot get data from Redis storage")
-        }
-        if (validUntil.toLong() < System.currentTimeMillis()) {
-            return InputResponse(false, "Expired keypadId")
-        }
-        if (iHmac != generateHash(iKeypadId, validUntil, publicKey.toString())) {
-            return InputResponse(false, "Invalid properties")
-        }
+        val authReq = mapOf(
+            "userInput" to userInput,
+            "keyHashMap" to keyHashMap,
+            "keyLength" to keyLength
+        )
+        var res = callSubmitApi(body = authReq)
 
-        // 로컬에 저장된 private key를 사용해 inputRequest의 encryptedKey를 복호화
-//        val decryptedInput = KeypadUtils.decrypt(iEncryptedInput, keyPair.private)
-//
-//        println("decryptedInput: $decryptedInput")
 
-        return InputResponse(true, "Success")
+//        http://146.56.119.112:8081/auth
+
+
+//        val iHmac :String = inputRequest.hmac
+
+//        if (validUntil == null) {}
+//            return InputResponse(false, "Cannot get data from Redis storage")
+//        }
+//        if (validUntil.toLong() < System.currentTimeMillis()) {
+//            return InputResponse(false, "Expired keypadId")
+//        }
+//        if (iHmac != generateHash(iKeypadId, validUntil, publicKey.toString())) {
+//            return InputResponse(false, "Invalid properties")
+//        }
+
+//        {
+//            "userInput": String,
+//            "keyHashMap": Map<String, String>,
+//            "keyLength": Int
+//        }
+
+
+        return InputResponse(true, res)
+    }
+    fun callSubmitApi (body: Map<String,Any?>) :String {
+        val url = "http://146.56.119.112:8081/auth"
+        val response = webClient.post()
+            .uri(url)
+            .bodyValue(body)
+            .retrieve()
+            .bodyToMono(String::class.java).block()
+
+        println("Response from submit API: $response")
+        return response
     }
 
     private fun generateHash(keypadId: String, timeStamp: String, pubKeyBase64: String): String {
