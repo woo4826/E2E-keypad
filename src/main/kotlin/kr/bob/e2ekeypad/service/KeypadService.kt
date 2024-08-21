@@ -24,7 +24,7 @@ class KeypadService(
 ) {
 
     // 서비스 인스턴스가 생성될 때 로컬에 키페어를 생성하여 저장
-    private val publicKey: PublicKey = loadPublicKey()
+//    private val publicKey: PublicKey = loadPublicKey()
 
     fun requestKeypad(): Map<String, Any> {
         val keypadMap = KeypadUtils.generateKeyPad()
@@ -36,7 +36,7 @@ class KeypadService(
             id = keypadId,
             keypadId = keypadId,
             validUntil = validUntil,
-            sessionKeyHash = generateHash(keypadId, validUntil, publicKey.toString()),
+            sessionKeyHash = generateHash(keypadId, validUntil),
             keyHashMap = keypadMap
         )
         val hashedKeyList = keypadMap.map { (key, value) ->
@@ -52,62 +52,64 @@ class KeypadService(
     }
 
 
-    private fun loadPublicKey(): PublicKey {
-        // 파일 경로: src/main/resources/public_key.pem
-        val publicKeyFile = File("src/main/resources/keys/public_key.pem")
-
-        val keyLines = BufferedReader(FileReader(publicKeyFile)).use { reader ->
-            reader.lineSequence()
-                .filter { line -> !line.startsWith("-----") }  // PEM의 헤더와 풋터는 제외
-                .joinToString("") // 나머지 라인을 합쳐서 한 줄의 문자열로 변환
-        }
-
-        // Base64 디코딩
-        val keyBytes = Base64.getDecoder().decode(keyLines)
-
-        // X509EncodedKeySpec을 사용하여 공개 키를 생성
-        val keySpec = X509EncodedKeySpec(keyBytes)
-        val keyFactory = KeyFactory.getInstance("RSA")
-
-        return keyFactory.generatePublic(keySpec)
-    }
+//    private fun loadPublicKey(): PublicKey {
+//        // 파일 경로: src/main/resources/public_key.pem
+//        val publicKeyFile = File("src/main/resources/keys/public_key.pem")
+//
+//        val keyLines = BufferedReader(FileReader(publicKeyFile)).use { reader ->
+//            reader.lineSequence()
+//                .filter { line -> !line.startsWith("-----") }  // PEM의 헤더와 풋터는 제외
+//                .joinToString("") // 나머지 라인을 합쳐서 한 줄의 문자열로 변환
+//        }
+//
+//        // Base64 디코딩
+//        val keyBytes = Base64.getDecoder().decode(keyLines)
+//
+//        // X509EncodedKeySpec을 사용하여 공개 키를 생성
+//        val keySpec = X509EncodedKeySpec(keyBytes)
+//        val keyFactory = KeyFactory.getInstance("RSA")
+//
+//        return keyFactory.generatePublic(keySpec)
+//    }
     fun submit(inputRequest: SubmitRequest): InputResponse {
         val iKeypadId = inputRequest.keypadId
-        val keyPad: KeyPad = keypadRepository.findById(iKeypadId) ?: return InputResponse(false, "Invalid keypadId")
-        val validUntil = keyPad.validUntil
         val keyLength = inputRequest.keyLength
         val userInput = inputRequest.data
-        val keyHashMap = keyPad.keyHashMap
 
+        val keyPad: KeyPad = keypadRepository.findById(iKeypadId) ?: return InputResponse(false, "Invalid keypadId")
+
+        //keypad info
+        val validUntil = keyPad.validUntil
+        val keyHashMap = keyPad.keyHashMap
+        // stored session key hash
+        val sessionKeyHash = keyPad.sessionKeyHash
+
+
+
+        if (validUntil == null) {
+            return InputResponse(false, "Cannot get data from Redis storage")
+        }
+        if (validUntil.toLong() < System.currentTimeMillis()) {
+            return InputResponse(false, "Expired keypadId")
+        }
+        val iHmac = generateHash( iKeypadId, validUntil)
+
+        if (iHmac != sessionKeyHash) {
+            return InputResponse(false, "Invalid properties")
+        }
+
+//        request body        val iHmac = generateHash( iKeypadId, validUntil)
+//        {
+//            "userInput": String,
+//            "keyHashMap": Map<String, String>,
+//            "keyLength": Int
+//        }
         val authReq = mapOf(
             "userInput" to userInput,
             "keyHashMap" to keyHashMap,
             "keyLength" to keyLength
         )
         var res = callSubmitApi(body = authReq)
-
-
-//        http://146.56.119.112:8081/auth
-
-
-//        val iHmac :String = inputRequest.hmac
-
-//        if (validUntil == null) {}
-//            return InputResponse(false, "Cannot get data from Redis storage")
-//        }
-//        if (validUntil.toLong() < System.currentTimeMillis()) {
-//            return InputResponse(false, "Expired keypadId")
-//        }
-//        if (iHmac != generateHash(iKeypadId, validUntil, publicKey.toString())) {
-//            return InputResponse(false, "Invalid properties")
-//        }
-
-//        {
-//            "userInput": String,
-//            "keyHashMap": Map<String, String>,
-//            "keyLength": Int
-//        }
-
 
         return InputResponse(true, res)
     }
@@ -123,12 +125,13 @@ class KeypadService(
         return response
     }
 
-    private fun generateHash(keypadId: String, timeStamp: String, pubKeyBase64: String): String {
+    private fun generateHash(keypadId: String, timeStamp: String): String {
         val secretKey = SecretKeySpec("secret".toByteArray(), "HmacSHA256")
 
         val mac = Mac.getInstance("HmacSHA256")
-        mac.init(secretKey)
-        val data = (keypadId + timeStamp + pubKeyBase64).toByteArray()
+//        mac.init(secretKey)
+//        val data = (keypadId + timeStamp + pubKeyBase64).toByteArray()
+        val data = (keypadId + timeStamp ).toByteArray()
         val hash = mac.doFinal(data)
         return Base64.getEncoder().encodeToString(hash)
     }
